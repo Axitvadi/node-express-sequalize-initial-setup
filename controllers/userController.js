@@ -1,9 +1,10 @@
-const User = require('../models/user')
+const db = require('../database/conn')
+const { User } = db
 const { prepareSuccessResponse } = require('../utils/responseHandler')
 
 exports.getUser = async (req, res) => {
   const id = req.params.id
-  const user = await User.findById(id).select('-password')
+  const user = await User.findByPk(id, { attributes: { exclude: ['password'] } })
   if (!user) {
     const error = new Error('User not found.')
     error.statusCode = 404
@@ -11,7 +12,7 @@ exports.getUser = async (req, res) => {
   }
 
   const result = {
-    id: user._id,
+    id: user.id,
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
@@ -24,11 +25,11 @@ exports.getUser = async (req, res) => {
 }
 
 exports.getAllUsers = async (req, res) => {
-  const users = await User.find().select('-password')
+  const users = await User.findAll({ attributes: { exclude: ['password'] } })
 
   const result = users.map((user) => {
     return {
-      id: user._id,
+      id: user.id,
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email,
@@ -43,22 +44,24 @@ exports.getAllUsers = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   const id = req.params.id
-  let user = await User.findById(id)
+
+  const preUser = {
+    first_name: req.body.first_name,
+    last_name: req.body.last_name,
+    email: req.body.email,
+    phone: req.body.phone
+  }
+
+  const user = await User.update(preUser, { where: { id } })
+
   if (!user) {
     const error = new Error('Could not find user.')
     error.statusCode = 404
     throw error
   }
 
-  user.first_name = req.body.first_name
-  user.last_name = req.body.last_name
-  user.email = req.body.email
-  user.phone = req.body.phone
-
-  user = await user.save()
-
   const result = {
-    id: user._id.toString(),
+    id: user.id,
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
@@ -72,7 +75,7 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   const id = req.params.id
-  const user = await User.findByIdAndRemove(id)
+  const user = await User.destroy({ where: { id } })
   if (!user) {
     const error = new Error('Could not find user.')
     error.statusCode = 404

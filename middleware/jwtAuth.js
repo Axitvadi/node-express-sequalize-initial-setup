@@ -14,9 +14,9 @@ module.exports = (expectedRole) => (req, res, next) => {
 
   try {
     decodedToken = jwt.verify(token, process.env.SECRET_KEY)
-  } catch (err) {
-    err.statusCode = 401
-    throw err
+  } catch (error) {
+    error.statusCode = 401
+    throw error
   }
 
   if (!decodedToken) {

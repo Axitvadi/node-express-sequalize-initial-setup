@@ -1,5 +1,5 @@
 require('dotenv').config()
-require('./database/conn')
+const db = require('./database/conn')
 const express = require('express')
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -14,11 +14,27 @@ app.use(cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
+// for production
+db.sequelize.sync()
+  .then(() => {
+    seed.seedAdmin()
+    console.log('Synced db.')
+  })
+  .catch((err) => {
+    console.log('Failed to sync db: ' + err.message)
+  })
+
+//* *only for development
+// db.sequelize.sync({ force: true }).then(() => {
+//   console.log('Drop and re-sync db.')
+//   seed.seedAdmin()
+// }).catch((err) => {
+//   console.log('Failed to sync db: ' + err.message)
+// })
+
 app.use('/api', routes)
 
 app.use(errorHandler)
-
-seed.seedAdmin()
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)

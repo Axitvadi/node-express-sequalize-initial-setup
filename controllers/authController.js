@@ -1,4 +1,5 @@
-const User = require('../models/user')
+const db = require('../database/conn')
+const { User } = db
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { prepareSuccessResponse } = require('../utils/responseHandler')
@@ -7,7 +8,8 @@ exports.login = async (req, res) => {
   const email = req.body.email
   const password = req.body.password
 
-  const user = await User.findOne({ email })
+  const user = await User.findOne({ where: { email } })
+
   if (!user) {
     const error = new Error('Invalid username or password.')
     error.statusCode = 422
@@ -24,7 +26,7 @@ exports.login = async (req, res) => {
 
   const token = jwt.sign(
     {
-      id: user._id,
+      id: user.id,
       email: user.email,
       role: user.role
     },
@@ -35,7 +37,7 @@ exports.login = async (req, res) => {
   const result = {
     token,
     user: {
-      id: user._id,
+      id: user.id,
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email
@@ -70,7 +72,7 @@ exports.register = async (req, res) => {
   const user = await newUser.save()
 
   const result = {
-    id: user._id,
+    id: user.id,
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
